@@ -42,9 +42,8 @@ function status() {
   };
 }
 function updateBadge() {
-  const text = phase === 'connected' ? 'ON' : ['connecting', 'retrying'].includes(phase) ? '…' : '';
-  void chrome.action.setBadgeText({ text }).catch(() => {});
-  void chrome.action.setBadgeBackgroundColor({ color: phase === 'connected' ? '#14804a' : '#637087' }).catch(() => {});
+  // Keep the toolbar to the whale artwork only; connection state is shown in the popup.
+  void chrome.action.setBadgeText({ text: '' }).catch(() => {});
 }
 function setPhase(value, message = '') { phase = value; lastError = message; updateBadge(); }
 function enqueueSettings(task) {

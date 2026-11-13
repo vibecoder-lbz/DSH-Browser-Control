@@ -1,10 +1,10 @@
-# DSH Browser Use
+﻿# DSH Browser Use
 
 让 DSH 中的 Agent 控制真实的 Chrome / Edge 浏览器。支持按页面元素操作，也支持截图、坐标点击、键盘、滚动和拖拽，适合搜索、填表、后台管理及网页流程自动化。
 
 这是 **DSH 服务端插件**，安装后模型会获得 8 个浏览器工具，包含 Chrome 副本接管与 JumpServer / xterm 网页终端操作。DSH 运行时，随附 Chrome 扩展安装后自动连接，**无需配对码**；选定页面后，在原窗口后台创建或复用唯一副本并标记“被接管”，不新开窗口、不自动切换标签页，控制副本而不操作原页面。启动独立浏览器无需扩展，两种模式都不需要额外 MCP 服务。
 
-当前版本：`0.5.0`。适配 **DSH `0.2.2-rc.1`** 和 Node.js `>=24.9.0`。浏览器驱动使用 `playwright-core`，优先使用本机 Chrome，其次 Edge，也可指定 Chromium 路径；不自动下载浏览器。
+当前版本：`0.5.1`。适配 **DSH `0.2.2-rc.1`** 和 Node.js `>=24.9.0`。浏览器驱动使用 `playwright-core`，优先使用本机 Chrome，其次 Edge，也可指定 Chromium 路径；不自动下载浏览器。
 
 安装或升级请先看 [更新与使用手册](./docs/update-manual.md)，其中包含 Chrome 扩展更新、DSH 插件升级、更新验证、故障处理和回退步骤。
 
@@ -34,7 +34,7 @@ dsh plugin --profile web add "D:\project\dsh_plugin"
 
 ```powershell
 npm run pack:plugin
-dsh plugin --profile web add "D:\project\dsh_plugin\dsh-browser-use-0.5.0.tgz"
+dsh plugin --profile web add "D:\project\dsh_plugin\dsh-browser-use-0.5.1.tgz"
 ```
 
 如果已安装旧版组合包，先使用 `dsh plugin --profile web remove dsh-browser-use` 移除，再添加新版安装包；如提示需要重启，重启原有 DSH 进程。

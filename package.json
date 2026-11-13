@@ -1,6 +1,6 @@
 {
   "name": "dsh-browser-use",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "icon": "./chrome-extension/icons/icon128.png",
   "description": "DSH browser control with tokenless extension connection, labelled tab copies and Web SSH terminals",
   "type": "module",
