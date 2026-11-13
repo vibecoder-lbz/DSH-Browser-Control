@@ -1,0 +1,61 @@
+{
+  "name": "dsh-browser-use",
+  "version": "0.5.0",
+  "icon": "./chrome-extension/icons/icon128.png",
+  "description": "DSH browser control with tokenless extension connection, labelled tab copies and Web SSH terminals",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./runtime": "./src/browser.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "scripts",
+    "test",
+    "docs",
+    "chrome-extension",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": "0.2.2-rc.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check src/browser.js && node --check src/snapshot.js && node --check src/terminal.js && node --check src/url.js && node --check src/bridge.js && node --check src/editor.js && node --check src/yaml-edit.js && node --check src/format.js && node --check chrome-extension/background.js && node --check chrome-extension/page-marker.js && node --check chrome-extension/ui.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js chrome-extension/test/*.test.mjs",
+    "demo": "node scripts/demo.mjs",
+    "pack:plugin": "npm pack --ignore-scripts"
+  },
+  "dependencies": {
+    "playwright-core": "1.65.0",
+    "ws": "8.21.0",
+    "yaml": "2.8.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.1.0",
+    "@deepseek-ai/dsh-attachment": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-tools": "0.2.2-rc.1",
+    "@deepseek-ai/schemastery": "~3.19.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "~4.1.0",
+    "@deepseek-ai/dsh-attachment": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-tools": "0.2.2-rc.1",
+    "@deepseek-ai/schemastery": "~3.19.0",
+    "@xterm/addon-webgl": "0.18.0",
+    "@xterm/xterm": "5.5.0",
+    "ace-builds": "1.43.5",
+    "codemirror": "5.65.20",
+    "monaco-editor": "0.55.1"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "DSH 当前标签页控制",
+  "version": "0.5.0",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "description": "自动连接本机 DSH，在带有被接管标记的复制标签页中完成后台网页操作。",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuICA9+uHIW4kRyf+zd83Kw3rIpinmyYzK5PdLI9MnQ+4WgmrKPOgdz1rVr/r96Ob7FtmZLyEaGO5bHauWQZ4hDfufR1H7p5FdF5oitJ5RKms5ZBT62ukt4R9ysb+A6vwXUcB7kwSYOREBpU076/4aKKMVu+pRo5oqv3CWMGvcbRV1c2QUPh9eu1Ug++91hxA97A2WGYrdPVl0LPUEsmh//r2YEi9j3VkqXOamTbVYVPnuH+fMzjKxOBfDXP/SZTQhqRLMSaq8o0BnnkDao8Px+dono78+0FVt+5/uT0Gt+BqbDs3THElTP2WIZzYimPWU5WPm8rMxWsUJfpIJHIhNQIDAQAB",
+  "minimum_chrome_version": "125",
+  "permissions": ["debugger", "tabs", "storage", "alarms", "scripting", "tabGroups"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "DSH 网页控制",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:*"
+  }
+}

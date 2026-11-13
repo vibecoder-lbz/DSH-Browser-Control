@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSH 网页控制设置</title>
+  <link rel="icon" type="image/png" href="icons/icon32.png">
+  <link rel="stylesheet" href="ui.css">
+  <script type="module" src="ui.js"></script>
+</head>
+<body class="options">
+  <main>
+    <header>
+      <div class="brand"><img class="brand-icon" src="icons/icon48.png" width="28" height="28" alt="DeepSeek 鲸鱼">DSH <span>Chrome</span></div>
+      <h1>后台网页控制</h1>
+      <p class="intro">安装后自动连接本机 DSH，无需输入配对码。</p>
+    </header>
+    <section class="status-panel" aria-label="连接状态">
+      <div class="status-line"><span id="statusDot" class="dot"></span><strong id="statusText">读取状态中</strong></div>
+      <div class="counts"><span>原标签页 <b id="tabsCount">—</b></span><span>正在控制 <b id="attachedCount">—</b></span></div>
+      <p id="bridgeAddress" class="bridge-address"></p>
+      <p id="statusDetail" class="status-detail" aria-live="polite"></p>
+    </section>
+    <div class="buttons">
+      <button id="connectButton" class="primary" type="button">恢复自动连接</button>
+      <button id="disconnectButton" type="button">暂停连接</button>
+    </div>
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+    <section class="guide" aria-label="使用说明">
+      <h2>直接开始</h2>
+      <p>保持 DSH 运行，在对话中说明网址或网页标题。Agent 会为原页面创建同一窗口内的后台副本，并在实际连接后显示“被接管”标签组、标题和页面标记。</p>
+      <p>每个原标签页全局只保留一个控制副本，重连和不同会话均复用它。不打开新窗口，不移动标签页，不自动选中副本，也不切换你的活动页面。</p>
+      <h2>副本与原页面</h2>
+      <p>原标签页不连接调试器，也不会被 Agent 关闭。后台副本打开同一网址并共享登录 Cookie，但不复制浏览历史、未提交表单或实时 SSH 会话；表单提交、远程命令等服务器操作仍然真实生效。</p>
+      <p>释放控制后，页面上的“被接管”标记会移除，标签组改为“已释放”。浏览器与标签页保持打开。Chrome 的原生调试提示不会被隐藏，取消提示或打开冲突的开发者工具可能断开控制。</p>
+      <h2>自动重连</h2>
+      <p>DSH 未启动时扩展会持续等待，连接中断后自动重试。“暂停连接”会停止自动重连并释放调试器；关闭此设置页不会暂停连接。</p>
+    </section>
+    <details class="guide">
+      <summary>高级设置</summary>
+      <p>只有为多个本机 DSH 配置不同端口时才需要修改。</p>
+      <form id="settingsForm">
+        <label for="bridgeUrl">本地桥地址</label>
+        <input id="bridgeUrl" name="bridgeUrl" type="url" required spellcheck="false" autocomplete="off" placeholder="ws://127.0.0.1:19876/extension">
+        <p class="field-help">仅允许 ws://127.0.0.1:&lt;端口&gt;/extension。扩展身份由浏览器验证，无需配对令牌。</p>
+        <div class="buttons"><button id="saveButton" type="submit">保存地址</button></div>
+      </form>
+    </details>
+  </main>
+</body>
+</html>

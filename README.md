@@ -2,9 +2,9 @@
 
 让 DSH 中的 Agent 控制真实的 Chrome / Edge 浏览器。支持按页面元素操作，也支持截图、坐标点击、键盘、滚动和拖拽，适合搜索、填表、后台管理及网页流程自动化。
 
-这是 **DSH 服务端插件**，安装后模型会获得 7 个浏览器工具，包含 Chrome 副本接管与 JumpServer / xterm 网页终端操作。DSH 运行时，随附 Chrome 扩展安装后自动连接，**无需配对码**；选定页面后，在原窗口后台创建或复用唯一副本并标记“被接管”，不新开窗口、不自动切换标签页，控制副本而不操作原页面。启动独立浏览器无需扩展，两种模式都不需要额外 MCP 服务。
+这是 **DSH 服务端插件**，安装后模型会获得 8 个浏览器工具，包含 Chrome 副本接管与 JumpServer / xterm 网页终端操作。DSH 运行时，随附 Chrome 扩展安装后自动连接，**无需配对码**；选定页面后，在原窗口后台创建或复用唯一副本并标记“被接管”，不新开窗口、不自动切换标签页，控制副本而不操作原页面。启动独立浏览器无需扩展，两种模式都不需要额外 MCP 服务。
 
-当前版本：`0.4.3`。适配 **DSH `0.2.2-rc.1`** 和 Node.js `>=24.9.0`。浏览器驱动使用 `playwright-core`，优先使用本机 Chrome，其次 Edge，也可指定 Chromium 路径；不自动下载浏览器。
+当前版本：`0.5.0`。适配 **DSH `0.2.2-rc.1`** 和 Node.js `>=24.9.0`。浏览器驱动使用 `playwright-core`，优先使用本机 Chrome，其次 Edge，也可指定 Chromium 路径；不自动下载浏览器。
 
 安装或升级请先看 [更新与使用手册](./docs/update-manual.md)，其中包含 Chrome 扩展更新、DSH 插件升级、更新验证、故障处理和回退步骤。
 
@@ -34,7 +34,7 @@ dsh plugin --profile web add "D:\project\dsh_plugin"
 
 ```powershell
 npm run pack:plugin
-dsh plugin --profile web add "D:\project\dsh_plugin\dsh-browser-use-0.4.3.tgz"
+dsh plugin --profile web add "D:\project\dsh_plugin\dsh-browser-use-0.5.0.tgz"
 ```
 
 如果已安装旧版组合包，先使用 `dsh plugin --profile web remove dsh-browser-use` 移除，再添加新版安装包；如提示需要重启，重启原有 DSH 进程。
@@ -67,6 +67,7 @@ DOM 页面文本和元素引用适用于纯文本模型。截图会通过 DSH �
 | `browser_act` | 点击、双击、悬停、填入、输入、按键、滚动、拖拽、选择下拉选项、前进、后退、刷新、短暂等待 |
 | `browser_tabs` | 列出、新建、切换、关闭标签页 |
 | `browser_terminal` | 发现 iframe 内的网页终端、逐键输入、单独回车、读取可访问输出、等待结果与截图 |
+| `browser_editor` | 识别 Monaco / Ace / CodeMirror / textarea；读取文档、按 YAML 路径预览并校验缩进与层级、版本一致时应用草稿，不自动发布 |
 | `browser_close` | 已有 Chrome 模式仅释放控制、保留网页；独立模式关闭浏览器并清理临时配置 |
 
 每次操作返回新的页面观察。可交互元素具有 `s3e2` 一类的引用 ID，以及名称、角色、状态和位置。引用与当时的真实元素绑定，每次观察后更新；旧引用会报错，避免页面改变后误点另一个元素。
@@ -104,6 +105,10 @@ browser_close({})
 `fill` 替换输入框现有内容；`type` 在光标处插入文字；`press` 用于 Enter 等按键。`wait` 的 `waitMs` 范围为 1–5000 ms，默认 500 ms，可用于等待异步页面更新。`ref`、`selector` 与 `x/y` 三种目标只能选择一种。iframe 与开放的 Shadow DOM 可以通过元素引用操作。
 
 截图默认关闭，开启时只截取可视区域。截图在保存为 DSH 附件时可能被缩小，返回文字会给出图片坐标转 CSS 坐标的比例。
+
+## 代码与配置编辑
+
+网页代码编辑器使用 `browser_editor`，不对其隐藏输入框执行普通 `fill`。工具先识别编辑器类型（Monaco / Ace / CodeMirror 5 / textarea）和文档格式（YAML / JSON / properties / XML / SQL / JavaScript / text），读取真实文档与版本，再选择对应操作：YAML 与 JSON 按路径修改，properties 按 section 和键修改，其他格式使用唯一片段替换。改动会先预览、校验，再写入编辑器草稿；并发修改、文档切换或路由变化会使计划失效，且不会自动点击发布。详见 [结构化编辑说明](./docs/structured-editing.md)。
 
 ## JumpServer 与 Kubernetes
 

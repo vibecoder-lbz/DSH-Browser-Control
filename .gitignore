@@ -1,0 +1,8 @@
+node_modules/
+.npm-cache/
+.artifacts/
+*.tgz
+*.log
+.env
+coverage/
+*.zip

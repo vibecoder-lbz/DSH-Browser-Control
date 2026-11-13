@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DSH 网页控制</title>
+  <link rel="icon" type="image/png" href="icons/icon32.png">
+  <link rel="stylesheet" href="ui.css">
+  <script type="module" src="ui.js"></script>
+</head>
+<body class="popup">
+  <main>
+    <header>
+      <div class="brand"><img class="brand-icon" src="icons/icon48.png" width="28" height="28" alt="DeepSeek 鲸鱼">DSH <span>Chrome</span></div>
+      <h1>后台网页控制</h1>
+      <p class="intro">安装后自动连接本机 DSH，直接描述要操作的网页即可。</p>
+    </header>
+    <section class="status-panel" aria-label="连接状态">
+      <div class="status-line"><span id="statusDot" class="dot"></span><strong id="statusText">读取状态中</strong></div>
+      <div class="counts"><span>原标签页 <b id="tabsCount">—</b></span><span>正在控制 <b id="attachedCount">—</b></span></div>
+      <p id="bridgeAddress" class="bridge-address"></p>
+      <p id="statusDetail" class="status-detail" aria-live="polite"></p>
+    </section>
+    <div class="buttons">
+      <button id="connectButton" class="primary" type="button">恢复自动连接</button>
+      <button id="disconnectButton" type="button">暂停连接</button>
+    </div>
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+    <p class="help">Agent 在同一窗口的后台副本中操作，每个原标签页只保留一个副本，不打开窗口或切换你的标签页。副本显示“被接管”，与原网页共享登录和服务器数据。</p>
+    <footer><button id="openOptions" class="text-button" type="button">高级设置与说明</button></footer>
+  </main>
+</body>
+</html>
