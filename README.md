@@ -4,7 +4,7 @@
 
 <h1>DSH Browser Control</h1>
 
-<p><strong>把 AI 接进你真实的浏览器。</strong></p>
+<p><strong>让 AI 在你的浏览器中完成网页任务。</strong></p>
 
 <p>接管已登录的 Chrome / Edge 标签页，在后台副本中观察、点击、填表、编辑配置、操作 Web 终端。<br>
 原页面保持原样，不抢焦点，不新开自动化窗口。</p>
@@ -27,11 +27,11 @@
 
 </div>
 
-> **通用浏览器接管，不止堡垒机。** 插件不绑定 JumpServer、Nacos 或任何特定网站；已登录的运营后台、SaaS、表单与审批、Nacos / Kubernetes 配置、网页代码编辑器和 Web SSH，都可以交给 Agent 在你的真实浏览器里完成。
+> **面向 AI Agent 的通用浏览器控制插件。** 从阅读网页、核对信息，到填写表单、操作业务后台、测试页面和编辑在线文档，通过一套工具完成观察、操作与结果检查。
 
-DSH Browser Control（包名 `dsh-browser-use`）是一个 **DeepSeek Harness（DSH）服务端插件**，配套 **Chrome MV3 扩展**。安装后，Agent 获得 8 个 `browser_*` 工具，可以观察页面、引用元素、截图、点击、输入、管理标签页、结构化编辑配置，并操作网页终端。
+DSH Browser Control（包名 `dsh-browser-use`）是一个 **DeepSeek Harness（DSH）服务端插件**，配套 **Chrome MV3 扩展**。它为 Agent 提供 8 个 `browser_*` 工具，将你的自然语言任务转为实际的浏览器操作：读取页面、截图、点击、输入、导航和管理标签页，也支持网页代码编辑器与 Web 终端。
 
-它和常见的自动化脚本最大的区别是：**默认不启动一个全新浏览器、也不要求重新登录**。插件会按网址 / 标题找到你已经打开的页面，在同一个窗口后台创建一个带标记的副本，然后只控制副本。原标签页不会被附加调试器、不会被输入、也不会被关闭。
+你可以**接管已登录的 Chrome / Edge 页面**，复用现有账号和工作环境；也可以**启动独立浏览器**，完成临时浏览、页面验证或隔离任务。接管已有页面时，插件按网址 / 标题查找目标，在同一窗口创建带标记的后台副本，并只控制副本。你可以继续使用原标签页。
 
 当前版本 **0.5.1**，验证环境为 **DSH 0.2.2-rc.1**、**Node.js ≥ 24.9.0**、**Chrome / Edge 125+**。无需配对令牌，无需 MCP 服务，也无需开启浏览器远程调试端口。
 
@@ -42,7 +42,7 @@ DSH Browser Control（包名 `dsh-browser-use`）是一个 **DeepSeek Harness（
 - **完整的浏览器操作**：DOM 元素引用、Playwright selector、截图、坐标、键盘、滚动、拖拽、下拉框、多标签页、iframe 和开放的 Shadow DOM。
 - **为 Agent 设计的观察协议**：每次动作返回新的页面快照；元素引用与真实元素绑定，页面变化后旧引用会报错，避免误点。
 - **结构化编辑，不是盲插文本**：自动识别 Monaco / Ace / CodeMirror / textarea 与 YAML / JSON / properties / XML / SQL / JavaScript，按路径修改并保持缩进、换行、注释和层级；先预览校验，再写入编辑器草稿。
-- **网页终端**：识别 JumpServer / xterm 终端，文字与 Enter 分开发送，读取可访问的 DOM 输出；Canvas / WebGL 场景可回退截图。
+- **网页终端**：识别使用 xterm.js 的 Web 终端，文字与 Enter 分开发送，读取可访问的 DOM 输出；Canvas / WebGL 场景可回退截图。
 - **多会话隔离**：一个源标签页只保留一个副本，同一时间只属于一个 DSH 会话；完成、取消或超时后释放控制，网页仍然保留。
 - **本地安全边界**：桥只监听 `127.0.0.1`，校验固定扩展的 Origin 与身份握手；不开放公网 CDP，不提供任意 JavaScript 执行。
 
@@ -50,12 +50,15 @@ DSH Browser Control（包名 `dsh-browser-use`）是一个 **DeepSeek Harness（
 
 | 场景 | 你可以这样说 |
 | --- | --- |
-| 已登录后台 | “接管我当前的运营后台，把这条工单改成已处理，提交前先给我看。” |
+| 网页阅读与信息整理 | “阅读当前打开的产品文档，总结接入步骤，并列出对应页面链接。” |
+| 多页面比较 | “对比这两个标签页的产品规格、价格和库存，整理成表格。” |
+| 业务后台与 SaaS | “接管我当前的运营后台，找到这条工单，填写处理说明，提交前先给我看。” |
 | 表单与审批 | “照着这份资料填写页面表单，不确定的字段先问我。” |
-| 配置中心 | “在 Nacos 的 `env` 下新增 `NEW_OPTION`，先预览 YAML 改动，不要发布。” |
-| 研发测试 | “复现这个页面的 iframe / Shadow DOM 问题，并截图给我。” |
-| Web SSH 运维 | “接管 JumpServer 页面，执行 `kubectl get pods -n prod`，把输出发给我。” |
-| 信息核对 | “对比这两个标签页的价格和库存，整理成表格。” |
+| 页面测试与排查 | “检查这个页面的导航、搜索和筛选流程，记录问题并截图。” |
+| 在线代码与配置编辑 | “在网页编辑器中给 JSON 新增一个字段，先展示改动预览。” |
+| Web 终端 | “连接页面里的终端，执行 `pwd`，读取并解释输出。” |
+
+这些任务使用相同的页面观察与操作工具。支持的网页编辑器和终端有专门的适配能力，具体范围见下文。
 
 ## 两种工作模式
 
@@ -150,7 +153,11 @@ browser_connect({ "action": "status" })
 
 > 打开浏览器访问 https://example.com，截图并总结页面内容。
 
-> 接管 Nacos 配置页，在 `env` 下新增 `NEW_OPTION`，先展示 YAML 预览，不要发布。
+> 接管已打开的产品页面，比较几个方案的功能和价格，整理出差异。
+
+> 检查当前页面的搜索和筛选功能，记录操作步骤，并截图展示结果。
+
+> 在网页编辑器中修改 YAML 的 `server.port`，先展示预览，确认后再应用到草稿。
 
 ## 接管已有页面：复制，而不是劫持
 
@@ -161,7 +168,7 @@ browser_connect({ "action": "status" })
 browser_connect({ "action": "list" })
 
 // 按网址 / 标题 / 关键词匹配，自动创建或复用副本
-browser_connect({ "action": "select", "query": "Nacos", "screenshot": true })
+browser_connect({ "action": "select", "query": "example.com", "screenshot": true })
 
 // 已知标签页 ID 时可以直接指定，避免同名歧义
 browser_connect({ "action": "select", "tabId": "chrome-123" })
@@ -212,7 +219,7 @@ browser_act({ "action": "drag", "x": 100, "y": 200, "toX": 400, "toY": 200 })
 
 ## 结构化编辑：识别场景，而不是硬编码
 
-`browser_editor` 不会假定当前页面是 Nacos，也不会把文字直接拼到光标处。它先识别两件事：
+`browser_editor` 根据页面中的编辑器实现和文档内容选择编辑方式，适用于在线开发环境、配置管理页面、API 调试工具及其他嵌入代码编辑器的网页。它先识别两件事：
 
 1. **编辑器实现**：Monaco、Ace、CodeMirror 5 或普通 textarea，包括 iframe 内的编辑器。
 2. **文档格式**：根据编辑器语言标签和实际内容判断 YAML、JSON、properties、XML、SQL、JavaScript 或普通文本；两者冲突时以内容为准，避免把 JSON 当 YAML 重排。
@@ -247,7 +254,7 @@ env:
   NEW_OPTION: new-value
 ```
 
-新字段位于 `env` 下，与 `EXISTING` 同级。Nacos 只是常见页面之一，同样的流程适用于任何 Monaco / Ace / CodeMirror / textarea 中的 YAML、JSON 或 properties 文档。
+新字段位于 `env` 下，与 `EXISTING` 同级。编辑流程按编辑器与文档格式适配，可用于受支持的 Monaco / Ace / CodeMirror / textarea 页面中的 YAML、JSON 或 properties 文档。
 
 编辑流程是**先读、再预览、后应用**：
 
@@ -273,16 +280,16 @@ browser_editor({ "action": "apply", "editorId": "editor1", "planId": "<preview �
 
 ## Web 终端
 
-JumpServer 是网页终端的一个常见入口，但不是插件的边界。任何使用 xterm.js 的 Web SSH 页面都可以尝试识别。命令文字与 Enter 分开发送：
+`browser_terminal` 面向使用 xterm.js 的网页终端，可用于在线开发环境、云控制台和 Web SSH 页面，也支持发现 iframe 内的终端。连接后可以读取输出、逐行输入命令、发送按键并等待结果。命令文字与 Enter 分开发送：
 
 ```jsonc
 browser_terminal({ "action": "list", "screenshot": true })
-browser_terminal({ "action": "type", "terminalId": "terminal1", "text": "kubectl get pods -n prod" })
+browser_terminal({ "action": "type", "terminalId": "terminal1", "text": "pwd" })
 browser_terminal({ "action": "press", "terminalId": "terminal1", "key": "Enter" })
 browser_terminal({ "action": "wait", "terminalId": "terminal1", "timeoutMs": 3000 })
 ```
 
-输出优先读取 xterm 的无障碍 DOM 或可访问渲染行；Canvas / WebGL 没有可读文本时返回 `textReadable=false`，需要支持图片输入的模型查看截图。输入派发成功不等于远端命令执行成功，断连也不等于回滚已经提交的操作。完整流程见 [JumpServer / Kubernetes 指南](./docs/jumpserver-kubernetes.md)。
+输出优先读取 xterm 的无障碍 DOM 或可访问渲染行；Canvas / WebGL 没有可读文本时返回 `textReadable=false`，需要支持图片输入的模型查看截图。输入派发成功不等于远端命令执行成功，断连也不等于回滚已经提交的操作。针对运维场景的完整示例见 [Web SSH 专项示例：JumpServer / Kubernetes](./docs/jumpserver-kubernetes.md)。
 
 ## 安全模型
 
@@ -383,7 +390,7 @@ npm run pack:plugin
 | [`src/format.js`](./src/format.js) | JSON / properties 结构化编辑 |
 | [`src/terminal.js`](./src/terminal.js) | xterm 发现、键盘输入、输出观察与轮询 |
 | [`chrome-extension/`](./chrome-extension/) | MV3 扩展：自动连接、副本管理、页面标记 |
-| [`docs/`](./docs/) | 使用、更新、编辑器与 JumpServer 文档 |
+| [`docs/`](./docs/) | 安装与更新、浏览器接管、结构化编辑及 Web SSH 专项示例 |
 | [`test/`](https://github.com/vibecoder-lbz/DSH-Browser-Control/tree/main/test) | 浏览器、编辑器、桥接、插件与终端测试（源码仓库） |
 
 ## 贡献
@@ -406,12 +413,14 @@ npm test
 | [更新与使用手册](./docs/update-manual.md) | 插件 / 扩展升级、更新验证、故障处理与回退 |
 | [免配对连接与副本接管](./docs/existing-chrome.md) | 扩展安装、匹配规则、副本语义、连接边界与排查 |
 | [结构化编辑说明](./docs/structured-editing.md) | YAML / JSON / properties 的路径编辑、预览与校验 |
-| [JumpServer / Kubernetes 指南](./docs/jumpserver-kubernetes.md) | Web SSH 终端操作、命令模板与 Kubernetes 更新注意事项 |
+| [Web SSH 专项示例：JumpServer / Kubernetes](./docs/jumpserver-kubernetes.md) | 通过具体运维场景演示终端操作、命令模板与结果验证 |
 | [更新日志](https://github.com/vibecoder-lbz/DSH-Browser-Control/commits/main) | 提交历史与版本变化 |
 
 ## English
 
-DSH Browser Control is a DeepSeek Harness (DSH) plugin plus a Chrome MV3 extension that lets an AI agent take over your existing Chrome / Edge session. It creates a marked background copy of the selected tab, never operates or closes the source tab, and never steals focus. It exposes eight tools for observation, browser actions, tab management, format-aware structured editing, and xterm / Web SSH terminals. Install the DSH plugin, load `chrome-extension`, then ask the agent to take over a tab. No pairing token, MCP server, or remote debugging port is required.
+DSH Browser Control is a general-purpose browser control plugin for DeepSeek Harness (DSH), paired with a Chrome MV3 extension. It lets AI agents read webpages, compare information across tabs, fill forms, work with business applications, test page interactions, edit supported web code editors, and operate xterm-based terminals through eight browser tools.
+
+Use your existing Chrome / Edge login or launch an isolated browser for a temporary task. When taking over an existing tab, the plugin creates a marked background copy, leaves the source tab untouched, and keeps your current tab in focus. Install the DSH plugin, load `chrome-extension`, and describe your task in natural language. No pairing token, MCP server, or remote debugging port is required.
 
 ## License
 
