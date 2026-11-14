@@ -1,3 +1,3 @@
 // Public identity, not a pairing secret.
+// Public Chrome extension identity, derived from the pinned manifest key. Not a pairing secret.
 export const EXTENSION_ID = "ecppjfjldnmelcdoilpkiggccoofjkpe";
-export const MANIFEST_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuICA9+uHIW4kRyf+zd83Kw3rIpinmyYzK5PdLI9MnQ+4WgmrKPOgdz1rVr/r96Ob7FtmZLyEaGO5bHauWQZ4hDfufR1H7p5FdF5oitJ5RKms5ZBT62ukt4R9ysb+A6vwXUcB7kwSYOREBpU076/4aKKMVu+pRo5oqv3CWMGvcbRV1c2QUPh9eu1Ug++91hxA97A2WGYrdPVl0LPUEsmh//r2YEi9j3VkqXOamTbVYVPnuH+fMzjKxOBfDXP/SZTQhqRLMSaq8o0BnnkDao8Px+dono78+0FVt+5/uT0Gt+BqbDs3THElTP2WIZzYimPWU5WPm8rMxWsUJfpIJHIhNQIDAQAB";

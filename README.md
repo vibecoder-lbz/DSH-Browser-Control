@@ -384,7 +384,7 @@ npm run pack:plugin
 | [`src/terminal.js`](./src/terminal.js) | xterm 发现、键盘输入、输出观察与轮询 |
 | [`chrome-extension/`](./chrome-extension/) | MV3 扩展：自动连接、副本管理、页面标记 |
 | [`docs/`](./docs/) | 使用、更新、编辑器与 JumpServer 文档 |
-| [`test/`](./test/) | 浏览器、编辑器、桥接、插件与终端测试 |
+| [`test/`](https://github.com/vibecoder-lbz/DSH-Browser-Control/tree/main/test) | 浏览器、编辑器、桥接、插件与终端测试（源码仓库） |
 
 ## 贡献
 

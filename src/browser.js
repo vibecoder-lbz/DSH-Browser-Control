@@ -240,7 +240,6 @@ class BrowserSession {
 
   async act(args, signal) {
     const page = await this.activePage();
-    const mouseActions = ['click', 'double_click', 'hover', 'fill', 'type', 'select'];
     const targetRequired = new Set(['click', 'double_click', 'hover', 'fill', 'type', 'select']);
     let target;
     if (targetRequired.has(args.action)) target = await this.target(args, page);

@@ -2,8 +2,9 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { validateSettings, isAllowedUrl, SETTINGS_KEY, CONTROLLED_KEY, CONTROLLED_LOCAL_KEY, COPY_ID_ATTRIBUTE, DEFAULT_SETTINGS } from '../shared.js';
-import { EXTENSION_ID, MANIFEST_KEY } from '../identity.js';
+import { EXTENSION_ID } from '../identity.js';
 
 class ChromeEvent {
   listeners = [];
@@ -51,7 +52,6 @@ const events = names => Object.fromEntries(names.map(key => [key, new ChromeEven
 function forbidden(method) { forbiddenCalls.push(method); throw new Error(`Forbidden UI activation API: ${method}`); }
 const fakeChrome = {
   runtime: { id: EXTENSION_ID, ...events(['onMessage', 'onStartup', 'onInstalled']) },
-  action: { async setBadgeText() {}, async setBadgeBackgroundColor() {} },
   windows: {
     async update() { forbidden('windows.update'); },
     async create() { forbidden('windows.create'); },
@@ -88,7 +88,7 @@ const fakeChrome = {
     },
   },
   tabs: {
-    ...events(['onCreated', 'onActivated', 'onMoved', 'onAttached', 'onDetached', 'onReplaced', 'onRemoved', 'onUpdated']),
+    ...events(['onCreated', 'onReplaced', 'onRemoved', 'onUpdated']),
     async query(filter = {}) {
       return [...tabData.values()].filter(tab => (filter.active === undefined || tab.active === filter.active) && (filter.windowId === undefined || tab.windowId === filter.windowId)).map(tab => ({ ...tab }));
     },
@@ -153,17 +153,18 @@ async function reloadWorker({ clearSession = false } = {}) {
   storage[SETTINGS_KEY] = { bridgeUrl: DEFAULT_SETTINGS.bridgeUrl, enabled: true };
   const socketCount = FakeSocket.instances.length;
   await import(`../background.js?worker-reload=${++reloadNumber}`);
-  await waitFor(() => FakeSocket.instances.length > socketCount && FakeSocket.instances.at(-1)?.messages.some(message => message.type === 'tabs'));
+  await waitFor(() => FakeSocket.instances.length > socketCount && FakeSocket.instances.at(-1)?.messages.some(message => message.type === 'hello'));
 }
 before(async () => {
   await import('../background.js');
-  await waitFor(() => FakeSocket.instances[0]?.messages.some(message => message.type === 'tabs'));
+  await waitFor(() => FakeSocket.instances[0]?.messages.some(message => message.type === 'hello'));
 });
 after(async () => { await ui('disconnect'); });
 
 test('manifest pins identity and settings migrate without old pairing tokens', async () => {
   const manifest = JSON.parse(await readFile(new URL('../manifest.json', import.meta.url), 'utf8'));
-  assert.equal(manifest.key, MANIFEST_KEY);
+  const digest = createHash('sha256').update(Buffer.from(manifest.key, 'base64')).digest('hex').slice(0, 32);
+  assert.equal([...digest].map(char => String.fromCharCode(97 + parseInt(char, 16))).join(''), EXTENSION_ID);
   assert.ok(manifest.permissions.includes('alarms'));
   assert.deepEqual(storage[SETTINGS_KEY], { bridgeUrl: DEFAULT_SETTINGS.bridgeUrl, enabled: true });
   assert.equal((await ui('status.get')).status.enabled, true);
@@ -174,14 +175,14 @@ test('validates local-only bridge address and discards legacy tokens', () => {
   for (const url of ['chrome://settings', 'chrome-extension://other/page', 'file:///test', 'javascript:void(0)']) assert.equal(isAllowedUrl(url), false);
   assert.equal(isAllowedUrl('about:blank'), true);
 });
-test('automatic connection sends v2 hello and source metadata', async () => {
+test('automatic connection sends v2 hello without a token', async () => {
   const socket = FakeSocket.instances[0];
   assert.deepEqual(socket.messages[0], { type: 'hello', version: 2, browser: 'Chrome', extensionId: EXTENSION_ID });
   assert.equal(new URL(socket.url).search, '');
   const response = await rpc('tabs.list'); assert.deepEqual(response.result.tabs.map(tab => tab.id), [1, 3]);
 });
-test('original pages cannot be attached, closed or activated', async () => {
-  for (const method of ['debugger.attach', 'tabs.remove', 'tabs.activate']) assert.match((await rpc(method, { tabId: 1 })).error.message, /复制标签页/);
+test('original pages cannot be attached or closed', async () => {
+  for (const method of ['debugger.attach', 'tabs.remove']) assert.match((await rpc(method, { tabId: 1 })).error.message, /复制标签页/);
   assert.deepEqual(nativeAttachCalls, []); assert.deepEqual(forbiddenCalls, []);
 });
 test('concurrent source requests create one inactive same-window copy and never native-duplicate or activate', async () => {
@@ -198,8 +199,7 @@ test('concurrent source requests create one inactive same-window copy and never 
   assert.equal(groupCalls.length, 0, 'Marker must wait until actual attach');
   assert.deepEqual(forbiddenCalls, []);
 });
-test('activation compatibility RPC and new-tab creation never select or move pages', async () => {
-  assert.equal((await rpc('tabs.activate', { tabId: mainClone })).result.active, false);
+test('new-tab creation never selects or moves pages', async () => {
   const fresh = (await rpc('tabs.create', { url: 'https://new.test' })).result;
   assert.equal(fresh.controlled, true); assert.equal(fresh.sourceTabId, null); assert.equal(fresh.active, false);
   assert.equal(tabData.get(1).active, true); assert.deepEqual(forbiddenCalls, []);

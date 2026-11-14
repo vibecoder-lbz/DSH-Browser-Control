@@ -114,7 +114,7 @@ export class ChromeBridge extends EventEmitter {
 
   status() {
     return { mode: 'existing', connected: this.connected, bridgeUrl: `ws://127.0.0.1:${this.port}/extension`,
-      setupUrl: `http://127.0.0.1:${this.port}/setup`, protocolVersion: 2, tokenRequired: false, duplicateBeforeControl: true,
+      setupUrl: `http://127.0.0.1:${this.port}/setup`, tokenRequired: false,
       message: this.connected ? 'Chrome extension connected automatically. Selecting a source tab creates or reuses a background controlled copy.' : 'Install or reload the current Chrome extension. It automatically connects to the running DSH bridge; no pairing code is needed.' };
   }
 
@@ -138,7 +138,6 @@ export class ChromeBridge extends EventEmitter {
           if (message.error) pending.reject(new Error(message.error.message || 'Extension command failed.'));
           else pending.resolve(message.result ?? {});
         } else if (message.type === 'debugger-event' || message.type === 'debugger-detached') this.emit('protocol', message);
-        else if (message.type === 'tabs') this.emit('tabs', message.tabs);
         else if (message.type === 'ping') ws.send(JSON.stringify({ type: 'pong' }));
       } catch { ws.close(1008, 'Invalid protocol message'); }
     });
@@ -254,7 +253,6 @@ class TabTransport {
     this.attachAttempted = true;
     await this.bridge.command('debugger.attach', { tabId: this.tab.id });
     if (this.closed) throw new Error('Existing-tab attachment was cancelled.');
-    this.attached = true;
     const { targetInfo } = await this.bridge.command('debugger.sendCommand', { tabId: this.tab.id, method: 'Target.getTargetInfo' });
     this.targetInfo = { ...targetInfo, browserContextId: targetInfo.browserContextId || 'default', attached: true };
     // chrome.debugger exposes page domains; Browser.getVersion is not available in that API.

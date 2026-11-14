@@ -15,13 +15,11 @@ let reconnectTimer;
 let connectTimer;
 let heartbeatTimer;
 let stableTimer;
-let tabsTimer;
 let retryAttempt = 0;
 let tabCount = 0;
 let nextRetryAt = null;
 let phase = 'disconnected';
 let lastError = '';
-let connectedAt = null;
 let settingsQueue = Promise.resolve();
 let persistenceQueue = Promise.resolve();
 const attachments = new Map();
@@ -36,16 +34,11 @@ function status() {
   return {
     phase, connected: phase === 'connected', enabled: settings.enabled,
     bridgeUrl: settings.bridgeUrl, tabsCount: tabCount,
-    controlledTabsCount: controlledTabs.size,
     attachedTabIds: [...attachments].filter(([, entry]) => entry.owned).map(([tabId]) => tabId),
-    retryAttempt, nextRetryAt, connectedAt, lastError, protocolVersion: 2,
+    retryAttempt, nextRetryAt, lastError,
   };
 }
-function updateBadge() {
-  // Keep the toolbar to the whale artwork only; connection state is shown in the popup.
-  void chrome.action.setBadgeText({ text: '' }).catch(() => {});
-}
-function setPhase(value, message = '') { phase = value; lastError = message; updateBadge(); }
+function setPhase(value, message = '') { phase = value; lastError = message; }
 function enqueueSettings(task) {
   const current = settingsQueue.catch(() => {}).then(task);
   settingsQueue = current;
@@ -88,15 +81,6 @@ async function listTabs() {
   tabCount = tabs.filter(tab => !tab.controlled).length;
   return tabs;
 }
-async function publishTabs(target = socket) {
-  try { sendTo(target, { type: 'tabs', tabs: await listTabs() }); }
-  catch (error) { if (target === socket) lastError = `无法读取标签页：${errorMessage(error)}`; }
-}
-function tabsChanged() {
-  clearTimeout(tabsTimer);
-  tabsTimer = setTimeout(() => { void publishTabs(); }, 80);
-}
-
 function setCopyIdentity(nonce, attribute) {
   if (document.documentElement) document.documentElement.setAttribute(attribute, nonce);
 }
@@ -202,7 +186,6 @@ async function duplicateControlled(tabId) {
   controlledTabs.set(clone.id, record);
   await persistControlled();
   await copyIdentity(clone.id, record);
-  tabsChanged();
   return tabMetadata(await chrome.tabs.get(clone.id), record);
 }
 
@@ -260,7 +243,6 @@ async function resetConnection() {
   const previous = socket;
   socket = null;
   clearConnectionTimers();
-  connectedAt = null;
   if (previous) { try { previous.close(1000, 'Extension disconnected'); } catch {} }
   await detachAllOwned();
 }
@@ -293,9 +275,8 @@ function connectSocket() {
   current.onopen = () => {
     if (socket !== current || generation !== epoch || !settings.enabled) { current.close(); return; }
     clearTimeout(connectTimer); connectTimer = undefined;
-    connectedAt = Date.now(); setPhase('connected');
+    setPhase('connected');
     sendTo(current, { type: 'hello', version: 2, browser: 'Chrome', extensionId: chrome.runtime.id });
-    void publishTabs(current);
     heartbeatTimer = setInterval(() => { sendTo(current, { type: 'ping' }); }, 20000);
     stableTimer = setTimeout(() => { if (socket === current) retryAttempt = 0; }, 60000);
   };
@@ -304,7 +285,7 @@ function connectSocket() {
   current.onclose = () => {
     void (async () => {
       if (socket !== current) { await detachAllOwned(current); return; }
-      socket = null; clearConnectionTimers(); connectedAt = null;
+      socket = null; clearConnectionTimers();
       setPhase(settings.enabled ? 'retrying' : 'disconnected');
       await detachAllOwned(current); scheduleReconnect(epoch);
     })();
@@ -324,11 +305,6 @@ async function dispatch(target, method, params) {
       if (target !== socket || !settings.enabled) await markControl(result.id, false);
       return { result };
     });
-  }
-  if (method === 'tabs.activate') {
-    const tabId = requireTabId(params);
-    // Compatibility RPC: selection happens only in DSH, never in the user's browser UI.
-    return { result: tabMetadata(await controlledTab(tabId), controlledTabs.get(tabId)) };
   }
   if (method === 'tabs.create') {
     if (!isAllowedUrl(params?.url)) throw new Error('新标签页网址必须使用 HTTP、HTTPS 或 about:blank。');
@@ -457,13 +433,8 @@ chrome.debugger.onDetach.addListener((source, reason) => {
   entry.owned = false; entry.detached = true; entry.state = 'detached';
   forwardAttachmentEvent(entry, { type: 'debugger-detached', tabId: source.tabId, reason });
   if (entry.ready && attachments.get(source.tabId) === entry) attachments.delete(source.tabId);
-  void markControl(source.tabId, false); updateBadge();
+  void markControl(source.tabId, false);
 });
-chrome.tabs.onCreated.addListener(tabsChanged);
-chrome.tabs.onActivated.addListener(tabsChanged);
-chrome.tabs.onMoved.addListener(tabsChanged);
-chrome.tabs.onAttached.addListener(tabsChanged);
-chrome.tabs.onDetached.addListener(tabsChanged);
 chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
   void enqueueTab(removedTabId, () => detachOwned(removedTabId));
   const record = controlledTabs.get(removedTabId);
@@ -478,12 +449,12 @@ chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
       }
       if (record) await copyIdentity(addedTabId, controlledTabs.get(addedTabId));
     } catch { /* A replaced target can close before its metadata is read. */ }
-    await persistControlled(); tabsChanged();
+    await persistControlled();
   })();
 });
 chrome.tabs.onRemoved.addListener(tabId => {
   void enqueueTab(tabId, () => detachOwned(tabId));
-  controlledTabs.delete(tabId); recoveryTabs.delete(tabId); markerOwners.delete(tabId); void persistControlled(); tabsChanged();
+  controlledTabs.delete(tabId); recoveryTabs.delete(tabId); markerOwners.delete(tabId); void persistControlled();
 });
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (!isAllowedTab(tab) && attachments.has(tabId)) void enqueueTab(tabId, () => detachOwned(tabId));
@@ -499,7 +470,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
     if (changed) void persistControlled();
   }
-  tabsChanged();
 });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local' || !changes[SETTINGS_KEY]) return;

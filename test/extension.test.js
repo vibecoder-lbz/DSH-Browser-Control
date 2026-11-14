@@ -52,7 +52,7 @@ test('real extension connects without token and controls labelled copies without
   const root = await mkdtemp(path.join(tmpdir(), 'dsh-extension-test-'));
   const fixture = await startFixture();
   const terminalFixture = await startTerminalFixture();
-  const manager = new BrowserManager({ bridgePort: 0, bridgeStatePath: path.join(root, 'pairing.json'), headless: true });
+  const manager = new BrowserManager({ bridgePort: 0, headless: true });
   let userChrome;
   let inspector;
   try {

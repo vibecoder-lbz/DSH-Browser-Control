@@ -1,7 +1,5 @@
 export const SETTINGS_KEY = 'dshBridgeSettings';
 export const CONTROLLED_KEY = 'dshControlledTabs';
-// Legacy window key remains exported for upgrades; no window is created or moved now.
-export const CONTROL_WINDOW_KEY = 'dshControlWindowId';
 export const CONTROLLED_LOCAL_KEY = 'dshControlledTabsRecoveryV3';
 export const COPY_ID_ATTRIBUTE = 'data-dsh-copy-id';
 export const DEFAULT_SETTINGS = Object.freeze({
