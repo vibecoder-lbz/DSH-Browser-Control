@@ -1,20 +1,16 @@
-﻿# DSH 浏览器控制插件更新与使用手册
+# DSH Browser Control 更新与使用手册
 
-适用版本：**0.5.1**  
-更新日期：2026 年 11 月 13 日  
+适用版本：**0.5.1**<br>
+更新日期：2026 年 11 月 14 日<br>
 适用环境：Windows、Chrome 125 及以上、DSH 0.2.2-rc.1、Node.js 24.9.0 及以上。
 
-本手册面向已安装过旧版插件的用户，也包含首次安装、更新验证、日常使用和故障处理。
+本手册适用于首次安装、从旧版升级、更新验证、日常使用、故障处理和回退。
 
-## 1. 先看你当前需要做什么
+## 1. 先看需要做什么
 
-本次会话中，**这台电脑的 DSH 插件已经升级并启用为 0.5.1**。你主要需要确认 Chrome 扩展也更新为 0.5.1。
+更新到 0.5.1 需要同时更新 **DSH 插件**和 **Chrome 扩展**；只更新其中一项不会自动更新另一项。两部分都应为 0.5.1，更新后无需填写配对码，前提是 DSH 已启动并运行对应的浏览器控制插件。
 
-- 如果 Chrome 加载的是项目中的 [chrome-extension 目录](../chrome-extension/)，直接到 `chrome://extensions` 点击该扩展的“重新加载”，然后确认版本。
-- 如果加载的是先前 ZIP 的解压目录，先用新版 ZIP 更新那个目录，再点击“重新加载”。仅下载 ZIP 或刷新 JumpServer 页面不会更新扩展。
-- 如果在另一台电脑使用，需要同时安装 DSH 插件和 Chrome 扩展，按第 3、4 节执行。
-
-**更新后无需填写配对码。** 前提是 DSH 已启动，并运行对应的浏览器控制插件。
+如果 Chrome 加载的是项目中的 [chrome-extension 目录](../chrome-extension/)，到 `chrome://extensions` 点击该扩展的“重新加载”并确认版本即可。仅刷新网页不会更新扩展。
 
 ## 2. 两部分组件与本次变化
 
@@ -25,7 +21,7 @@
 | DSH 插件 `dsh-browser-use` | DSH 当前 profile，例如 `web` | 提供 Agent 的浏览器工具，并启动本地连接服务 | 在 DSH“插件”页面查看组合包版本 |
 | Chrome 扩展“DSH 当前标签页控制” | 当前 Chrome 浏览器配置 | 连接已有网页、创建控制副本、显示接管标识 | 在 `chrome://extensions` 中点击该扩展“详情” |
 
-更新其中一项，不会自动更新另一项。两部分都使用 **0.5.1**，才能完整应用本次修复。
+更新其中一项，不会自动更新另一项。两部分都使用 **0.5.1**，才能完整应用上述行为与修复。
 
 ### 2.2 0.5.1 的行为
 
@@ -49,15 +45,15 @@
 
 如果当前电脑已确认是 0.5.1，可以跳过本节。
 
-### 3.1 准备安装包
+### 3.1 准备安装文件
 
-使用 [DSH 插件安装包](../dsh-browser-use-0.5.1.tgz)。本项目目录中的位置为：
+从源码安装时，先在项目目录执行：
 
-```text
-D:\project\dsh_plugin\dsh-browser-use-0.5.1.tgz
+```powershell
+npm install --ignore-scripts
 ```
 
-在其他电脑上，请将后续命令中的路径改为实际保存位置。
+也可以先运行 `npm run pack:plugin` 生成 `.tgz` 安装包。后续命令中的路径请改为你实际使用的项目目录或安装包位置。
 
 ### 3.2 从旧版升级
 
@@ -72,7 +68,8 @@ dsh plugin --profile web remove dsh-browser-use
 确认移除成功后，再执行：
 
 ```powershell
-dsh plugin --profile web add "D:\project\dsh_plugin\dsh-browser-use-0.5.1.tgz"
+# 在项目目录中安装源码；也可以改为 .tgz 安装包的绝对路径
+dsh plugin --profile web add .
 ```
 
 `web` 是当前示例 profile。如果你使用其他 profile，必须将两条命令中的 `web` 同时替换为实际名称。
@@ -103,13 +100,13 @@ npm install --global pnpm@11 --ignore-scripts
 pnpm --version
 ```
 
-然后重试失败的插件安装命令。当前这台电脑已安装 pnpm，通常不需要重复执行。
+然后重试失败的插件安装命令。已经能正常运行 `pnpm --version` 时不需要重复安装。
 
 ## 4. 更新 Chrome 扩展
 
 ### 4.1 方式 A：直接加载项目目录
 
-适用于你当前在这台开发电脑上的使用方式。
+适用于直接使用源码目录的方式。
 
 1. 在 Chrome 地址栏输入 `chrome://extensions`。
 2. 打开右上角“开发者模式”。
@@ -117,25 +114,17 @@ pnpm --version
 4. 如果它加载自 [项目扩展目录](../chrome-extension/)，点击扩展卡片上的“重新加载”按钮。
 5. 点击“详情”，确认版本为 **0.5.1**。
 
-项目扩展目录：
+加载目录是项目中的 `chrome-extension` 文件夹。只有该目录内的文件已经更新，重新加载才会得到新版；仅刷新网页不会更新扩展。
 
-```text
-D:\project\dsh_plugin\chrome-extension
-```
-
-只有该目录内的文件已经更新，重新加载才会得到新版。当前项目目录已包含 0.5.1 的文件。
-
-### 4.2 方式 B：用 ZIP 更新已解压目录
-
-使用 [Chrome 扩展安装包](../dsh-chrome-extension-0.5.1.zip)。
+### 4.2 方式 B：使用独立的扩展目录副本
 
 1. 在扩展管理页暂停旧扩展，避免更新时继续自动化操作。
-2. 将新版 ZIP 解压到你原来加载的扩展目录，并选择覆盖旧文件。
-3. 确认加载目录根部包含 [扩展清单](../chrome-extension/manifest.json)、[后台脚本](../chrome-extension/background.js) 和 [icons 文件夹](../chrome-extension/icons/)。不要选择 ZIP 文件本身，也不要选择多套了一层的外层目录。
+2. 把新版 `chrome-extension` 目录复制到一个固定位置，并使用它覆盖原来加载的目录。
+3. 确认加载目录根部直接包含 [扩展清单](../chrome-extension/manifest.json)、[后台脚本](../chrome-extension/background.js) 和 [icons 文件夹](../chrome-extension/icons/)。不要选择多套了一层的外层目录；如果使用自行打包的 ZIP，请先解压到固定目录。
 4. 回到 `chrome://extensions`，点击“重新加载”。如果之前关闭了扩展开关，再重新启用。
 5. 在“详情”中确认版本为 **0.5.1**。
 
-解压目录应长期保留。Chrome 从这个目录读取扩展，不能在加载后把它删除。
+这个固定目录应长期保留。Chrome 从这个目录读取扩展，不能在加载后把它删除。
 
 ### 4.3 无法直接更新时，移除后重装
 
@@ -182,7 +171,7 @@ ws://127.0.0.1:19876/extension
 
 ### 6.1 验证自动连接与接管
 
-在原浏览器窗口打开并登录 JumpServer，例如 [当前 JumpServer](http://jumpserver.ii-ai.tech/luna/)。在 DSH 对话中发送：
+在原浏览器窗口打开并登录你的 JumpServer，例如 `https://jumpserver.example.com/luna/`。在 DSH 对话中发送：
 
 > 帮我查看当前 JumpServer 页面，只测试接管和读取，不执行终端命令。
 
@@ -216,9 +205,9 @@ Chrome 首次建立调试连接时可能显示原生提示条。它与插件反�
 
 ### 6.4 验证 JumpServer 终端
 
-后台副本不继承原页面的实时 SSH 会话，需要在副本中重新选择资产并打开终端。以“中核战舰”为例，可以发送：
+后台副本不继承原页面的实时 SSH 会话，需要在副本中重新选择资产并打开终端。以目标资产为例，可以发送：
 
-> 在受控副本中打开“中核战舰”，先确认主机名，再只读查看 Kubernetes 当前 context，不更新镜像。
+> 在受控副本中打开目标资产，先确认主机名，再只读查看 Kubernetes 当前 context，不更新镜像。
 
 检查终端实际输出后再判断成功。输入已发送、截图为空或浏览器连接正常，都不能单独证明远程命令执行成功。
 
@@ -227,7 +216,7 @@ Chrome 首次建立调试连接时可能显示原生提示条。它与插件反�
 | 需求 | 可直接发送给 Agent 的指令 |
 | --- | --- |
 | 查看页面 | 查看当前 Chrome 里的 JumpServer 页面 |
-| 明确网址 | 接管 `http://jumpserver.ii-ai.tech/luna/` 对应的原标签页 |
+| 明确网址 | 接管 `<你的 JumpServer 地址>/luna/` 对应的原标签页 |
 | 重复读取 | 继续读取刚才的页面，复用已有副本 |
 | 查看 Kubernetes | 在副本终端只读查看当前 context、节点和命名空间 |
 | 释放控制 | 断开当前网页控制，保留标签页 |
@@ -266,7 +255,7 @@ DSH 侧回退示例：
 dsh plugin --profile web remove dsh-browser-use
 ```
 
-再安装你自行保存的上一版本安装包（项目目录只保留当前 0.5.1，旧安装包需要你提前备份）：
+再安装你自行保存的上一版本安装包（仓库不附带旧版本文件，需要提前备份）：
 
 ```powershell
 dsh plugin --profile web add "<你保存的旧版本安装包路径>.tgz"

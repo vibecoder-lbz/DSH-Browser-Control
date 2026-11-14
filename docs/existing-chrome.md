@@ -1,4 +1,4 @@
-﻿# 免配对连接与副本接管
+# 免配对连接与副本接管
 
 `dsh-browser-use 0.5.1` 的已有 Chrome 模式默认自动连接，并且只控制复制后的标签页。DSH 插件安装并运行后，在 Chrome 加载新版扩展即可使用，不再填写配对码。
 
@@ -6,10 +6,19 @@
 
 如果当前 DSH 已安装此插件，只需要更新到 0.5.1，再在 Chrome 中加载 / 重新加载 [chrome-extension](../chrome-extension/) 目录。新版扩展使用固定身份，旧版本升级时若 Chrome 未能直接重载，应移除旧的 DSH 扩展后重新加载该目录。
 
-新电脑需要先安装 DSH 侧工具插件：
+新电脑需要先安装 DSH 侧工具插件。从源码目录安装：
 
 ```powershell
-dsh plugin --profile web add "D:\project\dsh_plugin\dsh-browser-use-0.5.1.tgz"
+git clone https://github.com/vibecoder-lbz/DSH-Browser-Control.git
+cd DSH-Browser-Control
+npm install --ignore-scripts
+dsh plugin --profile web add .
+```
+
+也可以使用 `npm run pack:plugin` 生成的 `.tgz`：
+
+```powershell
+dsh plugin --profile web add "<安装包路径>.tgz"
 ```
 
 已有旧版组合包时，先用 `dsh plugin --profile web remove dsh-browser-use` 移除，再添加新版。将 `web` 替换为实际 profile；如要求重启，重启原来的 DSH。
@@ -71,7 +80,7 @@ browser_connect({ "action": "select", "tabId": "chrome-123" })
 
 ## JumpServer
 
-复制 JumpServer 的 Luna 页面后，可能需要在副本中重新选择资产并打开 Web SSH。原页面里已经连接的“中核战舰”等终端，其现有 SSH 会话不能保证迁移到副本。插件不会为了继续旧终端而退回原页面输入命令。
+复制 JumpServer 的 Luna 页面后，可能需要在副本中重新选择资产并打开 Web SSH。原页面里已经连接的终端，其现有 SSH 会话不能保证迁移到副本。插件不会为了继续旧终端而退回原页面输入命令。
 
 副本中打开正确的资产后，继续使用终端工具：
 

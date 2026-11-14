@@ -2,9 +2,28 @@
   "name": "dsh-browser-use",
   "version": "0.5.1",
   "icon": "./chrome-extension/icons/icon128.png",
-  "description": "DSH browser control with tokenless extension connection, labelled tab copies and Web SSH terminals",
+  "description": "DSH browser control: take over existing Chrome/Edge tabs in marked background copies, operate real logged-in sessions, edit structured configs and drive web terminals",
   "type": "module",
   "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vibecoder-lbz/DSH-Browser-Control.git"
+  },
+  "homepage": "https://github.com/vibecoder-lbz/DSH-Browser-Control#readme",
+  "bugs": {
+    "url": "https://github.com/vibecoder-lbz/DSH-Browser-Control/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "browser-automation",
+    "browser-control",
+    "chrome-extension",
+    "playwright",
+    "computer-use",
+    "web-terminal",
+    "yaml"
+  ],
   "exports": {
     ".": "./src/index.js",
     "./runtime": "./src/browser.js",
