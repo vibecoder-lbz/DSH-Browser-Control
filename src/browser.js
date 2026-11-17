@@ -16,6 +16,7 @@ export const DEFAULTS = Object.freeze({
   headless: false, viewportWidth: 1280, viewportHeight: 800,
   actionTimeoutMs: 10000, navigationTimeoutMs: 30000, launchTimeoutMs: 30000,
   idleTimeoutMs: 900000, maxElements: 100, maxTextChars: 12000,
+  autoCloseCopy: true,
 });
 
 function positiveInt(value, name, max = Number.MAX_SAFE_INTEGER) {
@@ -288,7 +289,7 @@ class BrowserSession {
       if (codeEditor) throw new Error('This target is a code editor. Use browser_editor to read the complete document, preview a structural edit and apply it. Hidden textareas and auto-indent can corrupt YAML hierarchy.');
     }
     const pointer = await this.pointer(page, args, target);
-    if (pointer) await showPointer(page, pointer);
+    if (pointer) await showPointer(page, { ...pointer, persist: Boolean(this.persistPointer) });
     switch (args.action) {
       case 'click':
       case 'double_click': {
@@ -467,6 +468,7 @@ class AttachedSession extends BrowserSession {
   constructor(config, bridge, tab, owner) {
     super(config);
     this.mode = 'existing'; this.bridge = bridge; this.tab = tab; this.owner = owner;
+    this.persistPointer = true;
   }
 
   start(signal) {
@@ -492,10 +494,12 @@ class AttachedSession extends BrowserSession {
       this.page = this.context.pages()[0];
       if (!this.page) throw new Error('Selected Chrome tab did not expose an accessible page.');
       this.tabs.set(`chrome-${this.tab.id}`, this.page);
+      this.page.on('load', () => { if (!this.closing) void this.showIdlePointer(); });
       this.browser.on('disconnected', () => { this.disconnected = true; });
       // Emulate focus only inside the controlled copy; do not activate its browser tab/window.
       await this.bridge.command('debugger.sendCommand', { tabId: this.tab.id, method: 'Emulation.setFocusEmulationEnabled', params: { enabled: true } });
       await this.activePage();
+      await this.showIdlePointer();
       return this;
     } catch (error) {
       this.transport.close(); await this.transport.dispose();
@@ -507,6 +511,15 @@ class AttachedSession extends BrowserSession {
     if (!this.page || this.page.isClosed()) throw new Error('Selected Chrome tab was closed or detached. Select it again with browser_connect.');
     this.currentViewport = await this.page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
     return this.page;
+  }
+
+  async showIdlePointer() {
+    try {
+      const point = await this.page.evaluate(() => ({ x: innerWidth / 2, y: innerHeight / 2 }));
+      await showPointer(this.page, { ...point, action: 'idle', persist: true });
+    } catch {
+      // The visual indicator must never prevent the tab from attaching.
+    }
   }
 
   async capture() {
@@ -551,6 +564,15 @@ class AttachedSession extends BrowserSession {
     this.transport?.close();
     this.closePromise = (async () => {
       await this.startTask?.catch(() => {});
+      if (this.config.autoCloseCopy !== false && this.bridge.connected && this.tab?.id) {
+        try {
+          await this.bridge.command('tabs.remove', { tabId: this.tab.id }, { timeoutMs: 3000 });
+          this.copyClosed = true;
+        } catch {
+          // The copy may already be closed or the bridge may be gone. Release
+          // control anyway; the original tab is never touched.
+        }
+      }
       this.transport?.close();
       await this.transport?.dispose();
       await this.browser?.close().catch(() => {});
@@ -569,6 +591,7 @@ export class BrowserManager {
       positiveInt(this.config[key], key);
     }
     if (this.config.viewportWidth > 3840 || this.config.viewportHeight > 2160) throw new Error('Viewport cannot exceed 3840x2160.');
+    if (typeof this.config.autoCloseCopy !== 'boolean') throw new Error('autoCloseCopy must be a boolean.');
     this.sessions = new Map();
     this.queues = new Map();
     this.bridge = new ChromeBridge(options);
@@ -587,9 +610,15 @@ export class BrowserManager {
       let entry = this.sessions.get(sessionId);
       clearTimeout(entry?.timer);
       if (operation === 'close' || (operation === 'connect' && args.action === 'disconnect')) {
-        const attached = entry?.session.mode === 'existing';
+        const session = entry?.session;
+        const attached = session?.mode === 'existing';
         if (entry) { this.sessions.delete(sessionId); await entry.session.close(); }
-        return attached ? { detached: true, mode: 'existing', message: 'Control released; Chrome tabs and login state remain open.' } : { closed: true };
+        return attached ? {
+          detached: true, mode: 'existing', copyClosed: session.copyClosed === true,
+          message: session.copyClosed
+            ? 'Control released and the controlled copy was closed. Original tabs and login state remain open.'
+            : 'Control released; the controlled copy remains open. Original tabs and login state remain open.',
+        } : { closed: true };
       }
       if (entry?.session.disconnected || entry?.session.closing) {
         this.sessions.delete(sessionId);

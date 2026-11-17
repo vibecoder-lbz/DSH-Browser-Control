@@ -6,3 +6,4 @@
         viewportWidth: 1280
         viewportHeight: 800
         idleTimeoutMs: 900000
+        autoCloseCopy: true

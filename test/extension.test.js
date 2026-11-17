@@ -122,6 +122,12 @@ test('real extension connects without token and controls labelled copies without
       await writeFile(path.join(project, '.artifacts', 'controlled-copy.png'), Buffer.from(result.screenshot.data, 'base64'));
     }
     const controlledId = result.selectedTab;
+    const copyPage = manager.sessions.get('agent').session.page;
+    const cursor = copyPage.locator('[data-dsh-cursor]');
+    assert.equal(await cursor.count(), 1);
+    assert.equal(await cursor.getAttribute('data-cursor-icon'), 'mouse');
+    assert.equal(await cursor.getAttribute('data-cursor-action'), 'idle');
+    assert.equal(await cursor.getAttribute('data-cursor-visible'), 'true');
     const originalState = (await manager.bridge.listTabs()).find(tab => `chrome-${tab.id}` === originalTabId);
     assert.equal(originalState.title, 'Existing application');
     const copyState = (await manager.bridge.listTabs()).find(tab => `chrome-${tab.id}` === result.selectedTab);
@@ -134,7 +140,11 @@ test('real extension connects without token and controls labelled copies without
     await manager.run('agent', 'act', { action: 'fill', selector: '#name', text: 'Copy browser assistant' });
     const submitted = await manager.run('agent', 'act', { action: 'click', selector: '#submit' });
     assert.match(submitted.frames[0].text, /已提交：Copy browser assistant/);
-    assert.equal(await manager.sessions.get('agent').session.page.locator('[data-dsh-cursor]').count(), 1);
+    assert.equal(await cursor.count(), 1);
+    assert.equal(await cursor.getAttribute('data-cursor-action'), 'click');
+    assert.equal(await cursor.getAttribute('data-cursor-visible'), 'true');
+    await copyPage.waitForTimeout(1800);
+    assert.equal(await cursor.getAttribute('data-cursor-visible'), 'true');
     const sameCopy = await manager.run('agent', 'connect', { action: 'select', query: 'Existing application' });
     assert.equal(sameCopy.selectedTab, controlledId);
     assert.equal((await manager.bridge.listTabs()).filter(tab => tab.controlled).length, 1);
@@ -144,7 +154,6 @@ test('real extension connects without token and controls labelled copies without
     assert.equal(ssh.selection.matched, true);
     assert.equal(ssh.sourceTab, originalSshId);
     const sshCopyId = ssh.selectedTab;
-    const copyPage = manager.sessions.get('agent').session.page;
     for (const frame of copyPage.frames().filter(frame => frame.url().includes('/ssh'))) await frame.waitForFunction(() => window.fixtureReady);
     const terminals = await manager.run('agent', 'terminal', { action: 'list' });
     assert.equal(terminals.terminals.length, 1);
@@ -156,7 +165,7 @@ test('real extension connects without token and controls labelled copies without
     ssh = await manager.run('agent', 'terminal', { action: 'wait', terminalId, waitForText: 'test-cluster-one', timeoutMs: 5000 });
     assert.equal(ssh.wait.matched, true);
     const otherCopy = await manager.run('another-agent', 'connect', { action: 'select', tabId: originalTabId });
-    assert.equal(otherCopy.selectedTab, controlledId);
+    assert.notEqual(otherCopy.selectedTab, controlledId);
     assert.equal((await manager.bridge.listTabs()).filter(tab => tab.controlled && `chrome-${tab.sourceTabId}` === originalTabId).length, 1);
     await assert.rejects(manager.run('agent', 'tabs', { action: 'close', tabId: otherCopy.selectedTab }), /another DSH session/);
     await manager.run('another-agent', 'close');
@@ -169,13 +178,19 @@ test('real extension connects without token and controls labelled copies without
     await manager.run('agent', 'connect', { action: 'select', tabId: originalTabId });
     const detached = await manager.run('agent', 'close');
     assert.equal(detached.detached, true);
+    assert.equal(detached.copyClosed, true);
+    const afterClose = await manager.run('agent', 'connect', { action: 'list' });
+    assert.equal(afterClose.tabs.some(tab => tab.id === controlledId), false);
     const reconnects = await Promise.all(Array.from({ length: 3 }, () => manager.run('agent', 'connect', { action: 'select', tabId: originalTabId })));
-    assert.ok(reconnects.every(result => result.selectedTab === controlledId));
+    const newCopyId = reconnects[0].selectedTab;
+    assert.notEqual(newCopyId, controlledId);
+    assert.ok(reconnects.every(result => result.selectedTab === newCopyId));
     await assert.rejects(manager.run('another-agent', 'connect', { action: 'select', tabId: originalTabId }), /another DSH session/);
     await manager.run('agent', 'close');
     assert.equal(userChrome.child.exitCode, null);
     const after = await manager.run('agent', 'connect', { action: 'list' });
     assert.ok(after.tabs.some(tab => tab.id === originalTabId));
+    assert.equal(after.tabs.some(tab => tab.id === newCopyId), false);
     inspector = await chromium.connectOverCDP(userChrome.endpoint, { noDefaults: true, timeout: 15000 });
     const finalWorker = inspector.contexts()[0].serviceWorkers().find(candidate => candidate.url().includes(extensionId));
     const focusEvents = await finalWorker.evaluate(() => globalThis.focusProbe);
@@ -196,9 +211,6 @@ test('real extension connects without token and controls labelled copies without
     assert.equal(preserved.title, 'Existing application');
     assert.equal(preserved.result, '等待填写');
     assert.equal(preserved.markers, 0);
-    const copied = (await inspectTab(controlledId))[0];
-    assert.equal(copied.name, 'Copy browser assistant');
-    assert.equal(copied.markers, 0);
     const originalSshFrames = await inspectTab(originalSshId);
     assert.deepEqual(originalSshFrames.find(frame => Array.isArray(frame.executed)).executed, []);
     assert.equal((await manager.bridge.listTabs()).find(tab => tab.active).id, Number(activeId.replace('chrome-', '')));

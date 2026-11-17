@@ -7,7 +7,7 @@ export async function showPointer(page, options) {
   let timer;
   try {
     await Promise.race([
-      page.evaluate(({ x, y, action, toX, toY }) => {
+      page.evaluate(({ x, y, action, toX, toY, persist }) => {
         const KEY = '__dshPointerOverlay_v3';
         const NS = 'http://www.w3.org/2000/svg';
         const root = document.documentElement;
@@ -76,6 +76,7 @@ export async function showPointer(page, options) {
         const previousY = state.y ?? py - 8;
         state.x = px;
         state.y = py;
+        state.persist = Boolean(persist);
         for (const animation of state.animations.splice(0)) animation.cancel();
         clearTimeout(state.timer);
         state.host.dataset.cursorAction = action;
@@ -136,7 +137,7 @@ export async function showPointer(page, options) {
             { transform: `${end} scale(1)` },
           ], { duration: 220, easing: 'ease-out' }));
         }
-        state.timer = setTimeout(fade, action === 'hover' ? 1100 : 1700);
+        if (!persist) state.timer = setTimeout(fade, action === 'hover' ? 1100 : 1700);
       }, options),
       new Promise(resolve => { timer = setTimeout(resolve, 300); }),
     ]);

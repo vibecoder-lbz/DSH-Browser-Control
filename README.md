@@ -40,11 +40,11 @@ DSH Browser Control（包名 `dsh-browser-use`）是一个 **DeepSeek Harness（
 - **接管真实登录态**：复用当前 Chrome / Edge profile 的 Cookie、localStorage 和网站登录，不需要在新浏览器里重新登录或重复过验证码。
 - **原页面零打扰**：在源页面所在窗口以 `active:false` 创建唯一副本，不新开窗口、不移动标签页、不切换活动标签页；副本显示 `【被接管】` 标题、`DSH · 被接管` 标签组和页面角标。
 - **完整的浏览器操作**：DOM 元素引用、Playwright selector、截图、坐标、键盘、滚动、拖拽、下拉框、多标签页、iframe 和开放的 Shadow DOM。
-- **看得见的鼠标动作**：点击、双击、悬停和拖拽会在页面内显示带淡蓝光晕的鼠标指针与点击波纹，截图里也能看到操作位置；它只是页面覆盖层，不移动真实系统指针，也不会抢焦点。
+- **看得见的鼠标动作**：接管后副本内会常驻一枚带淡蓝光晕的鼠标指针；点击、双击、悬停和拖拽时指针移动到操作位置并显示点击波纹，截图里也能看到。它只是页面覆盖层，不移动真实系统指针，也不会抢焦点。
 - **为 Agent 设计的观察协议**：每次动作返回新的页面快照；元素引用与真实元素绑定，页面变化后旧引用会报错，避免误点。
 - **结构化编辑，不是盲插文本**：自动识别 Monaco / Ace / CodeMirror / textarea 与 YAML / JSON / properties / XML / SQL / JavaScript，按路径修改并保持缩进、换行、注释和层级；先预览校验，再写入编辑器草稿。
 - **网页终端**：识别使用 xterm.js 的 Web 终端，文字与 Enter 分开发送，读取可访问的 DOM 输出；Canvas / WebGL 场景可回退截图。
-- **多会话隔离**：一个源标签页只保留一个副本，同一时间只属于一个 DSH 会话；完成、取消或超时后释放控制，网页仍然保留。
+- **多会话隔离**：一个源标签页只保留一个副本，同一时间只属于一个 DSH 会话；完成、取消或超时后释放控制，并按默认配置关闭这个副本，原标签页与登录状态始终保留。
 - **本地安全边界**：桥只监听 `127.0.0.1`，校验固定扩展的 Origin 与身份握手；不开放公网 CDP，不提供任意 JavaScript 执行。
 
 ## 适用场景
@@ -162,7 +162,7 @@ browser_connect({ "action": "status" })
 
 ## 接管已有页面：复制，而不是劫持
 
-接管时，插件不会把调试器附加到你的原标签页，也不会把点击或键盘输入发到原页面。它按源页面的网址 / 标题匹配目标，在源窗口后台打开同网址副本，之后所有操作只作用于副本。
+接管时，插件不会把调试器附加到你的原标签页，也不会把点击或键盘输入发到原页面。它按源页面的网址 / 标题匹配目标，在源窗口后台打开同网址副本，之后所有操作只作用于副本。副本内常驻鼠标指针；控制结束后副本会自动关闭，原标签页不受影响。
 
 ```jsonc
 // 查看可接管的用户标签页
@@ -177,11 +177,11 @@ browser_connect({ "action": "select", "tabId": "chrome-123" })
 
 几个重要保证：
 
-- **唯一副本**：同一个源标签页全局只保留一个控制副本；副本被其他会话占用时返回错误，不会悄悄再复制一份。
+- **唯一副本**：同一个源标签页在同一控制周期内只保留一个副本；副本被其他会话占用时返回错误，不会悄悄再复制一份。控制结束后副本关闭，下次接管会重新创建。
 - **同一标签组**：接管多个不同页面时，副本都放入同一个 `DSH · 被接管` 标签组，不会每接管一次就新建一组。
 - **不抢焦点**：不激活标签页、不置前窗口、不切换活动标签页。你可以继续使用原页面，Agent 在后台副本中工作。
-- **源页面只读**：原标签页不能被附加调试、输入或通过本插件关闭；只有副本可以被释放控制或显式关闭。
-- **释放后保留网页**：取消、超时、断开连接和插件卸载只释放副本控制并移除标记，原页面和副本都不删除。
+- **源页面只读**：原标签页不能被附加调试、输入或通过本插件关闭；只有副本可以被释放控制或关闭。
+- **控制结束自动关闭副本**：`browser_close`、断开连接、取消、闲置超时和插件卸载都会关闭受控副本并移除标记；原标签页与登录状态保留。需要保留副本时设置 `autoCloseCopy: false`。
 
 副本复用当前浏览器 profile，因此与原页面**共享 Cookie、localStorage 和网站登录**。它复制的是同网址页面，不是页面运行内存：未提交表单、导航历史、正在运行的 JavaScript、WebSocket 或现有 SSH 会话不会迁移。在副本中提交表单或退出登录，仍会影响同一个后台系统和同一个账号。
 
@@ -196,7 +196,7 @@ browser_connect({ "action": "select", "tabId": "chrome-123" })
 | `browser_tabs` | 列出、新建、切换、关闭标签页；原标签页不可关闭 |
 | `browser_terminal` | 发现 iframe 内的 xterm / Web SSH，逐行输入、单独回车、读取输出、等待结果与截图 |
 | `browser_editor` | 识别编辑器与文档格式，读取、预览、校验并应用结构化编辑，不自动发布 |
-| `browser_close` | 已有 Chrome 模式仅释放控制；独立模式关闭浏览器并清理临时 profile |
+| `browser_close` | 已有 Chrome 模式释放控制并默认关闭受控副本，原标签页保留；独立模式关闭浏览器并清理临时 profile |
 
 每次 `browser_observe` 或 `browser_act` 都会返回一份新的观察结果。可交互元素带有 `s3e2` 一类的引用 ID，引用与当时的真实元素绑定，下一次观察后更新；过期引用会报错，防止页面改变后误点。
 
@@ -333,6 +333,7 @@ Chrome 在附加调试器时会显示浏览器自带的调试提示条，扩展�
     idleTimeoutMs: 900000
     maxElements: 100
     maxTextChars: 12000
+    autoCloseCopy: true
     bridgePort: 19876
 ```
 
@@ -344,9 +345,10 @@ Chrome 在附加调试器时会显示浏览器自带的调试提示条，扩展�
 | `actionTimeoutMs` | `10000` | 单次页面动作超时 |
 | `navigationTimeoutMs` | `30000` | 导航超时 |
 | `launchTimeoutMs` | `30000` | 启动浏览器超时 |
-| `idleTimeoutMs` | `900000` | 独立浏览器闲置清理时间（15 分钟） |
+| `idleTimeoutMs` | `900000` | 会话闲置清理时间（15 分钟）；接管模式下会同时关闭副本 |
 | `maxElements` | `100` | 单次快照返回的最大交互元素数 |
 | `maxTextChars` | `12000` | 单次快照返回的最大文本长度 |
+| `autoCloseCopy` | `true` | 控制结束后关闭受控副本；原标签页始终保留。设为 `false` 可保留副本以便下次复用 |
 | `bridgePort` | `19876` | 扩展连接端口；修改后扩展高级设置也要同步 |
 
 也可以用环境变量 `DSH_BROWSER_EXECUTABLE` 指定浏览器路径。独立浏览器的 `headless` 可以由 `browser_open` 参数覆盖；已有 Chrome 的显示方式不变。
@@ -422,7 +424,7 @@ npm test
 
 DSH Browser Control is a general-purpose browser control plugin for DeepSeek Harness (DSH), paired with a Chrome MV3 extension. It lets AI agents read webpages, compare information across tabs, fill forms, work with business applications, test page interactions, edit supported web code editors, and operate xterm-based terminals through eight browser tools.
 
-Use your existing Chrome / Edge login or launch an isolated browser for a temporary task. When taking over an existing tab, the plugin creates a marked background copy, leaves the source tab untouched, and keeps your current tab in focus. Mouse actions draw a mouse pointer with a pale blue glow and a click ripple inside the page, so screenshots show exactly where the agent clicked. Install the DSH plugin, load `chrome-extension`, and describe your task in natural language. No pairing token, MCP server, or remote debugging port is required.
+Use your existing Chrome / Edge login or launch an isolated browser for a temporary task. When taking over an existing tab, the plugin creates a marked background copy, leaves the source tab untouched, and keeps your current tab in focus. A mouse pointer with a pale blue glow stays visible in the controlled copy; clicks and drags move it and add ripple feedback, so screenshots show exactly where the agent acted. When control ends, the copy is closed by default while original tabs and login state remain. Install the DSH plugin, load `chrome-extension`, and describe your task in natural language. No pairing token, MCP server, or remote debugging port is required.
 
 ## License
 
