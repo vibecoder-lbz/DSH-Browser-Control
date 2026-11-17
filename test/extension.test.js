@@ -134,6 +134,7 @@ test('real extension connects without token and controls labelled copies without
     await manager.run('agent', 'act', { action: 'fill', selector: '#name', text: 'Copy browser assistant' });
     const submitted = await manager.run('agent', 'act', { action: 'click', selector: '#submit' });
     assert.match(submitted.frames[0].text, /已提交：Copy browser assistant/);
+    assert.equal(await manager.sessions.get('agent').session.page.locator('[data-dsh-cursor]').count(), 1);
     const sameCopy = await manager.run('agent', 'connect', { action: 'select', query: 'Existing application' });
     assert.equal(sameCopy.selectedTab, controlledId);
     assert.equal((await manager.bridge.listTabs()).filter(tab => tab.controlled).length, 1);

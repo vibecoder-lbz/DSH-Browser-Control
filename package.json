@@ -61,7 +61,7 @@
     }
   },
   "scripts": {
-    "check": "node --check src/index.js && node --check src/browser.js && node --check src/snapshot.js && node --check src/terminal.js && node --check src/url.js && node --check src/bridge.js && node --check src/editor.js && node --check src/yaml-edit.js && node --check src/format.js && node --check chrome-extension/background.js && node --check chrome-extension/page-marker.js && node --check chrome-extension/ui.js",
+    "check": "node --check src/index.js && node --check src/browser.js && node --check src/cursor.js && node --check src/snapshot.js && node --check src/terminal.js && node --check src/url.js && node --check src/bridge.js && node --check src/editor.js && node --check src/yaml-edit.js && node --check src/format.js && node --check chrome-extension/background.js && node --check chrome-extension/page-marker.js && node --check chrome-extension/ui.js",
     "test": "node --test --test-concurrency=1 test/*.test.js chrome-extension/test/*.test.mjs",
     "demo": "node scripts/demo.mjs",
     "pack:plugin": "npm pack --ignore-scripts"

@@ -10,6 +10,7 @@ export function setPageControlMarker(enabled) {
   if (!enabled) {
     previous?.dispose();
     for (const host of document.querySelectorAll('[data-dsh-controlled]')) host.remove();
+    for (const host of document.querySelectorAll('[data-dsh-cursor]')) host.remove();
     const current = normalize(document.title);
     const restored = withoutPrefix(current);
     if (current !== restored) document.title = restored;

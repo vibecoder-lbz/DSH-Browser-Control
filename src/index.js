@@ -187,7 +187,7 @@ export function registerBrowserTools(ctx, config = {}) {
   register('browser_observe', 'Read the active browser page, visible element references and tab list; optionally attach a screenshot. Call again after asynchronous page updates. Replaces all prior element references.', {
     screenshot: screenshotParameter,
   }, 'observe');
-  register('browser_act', 'Perform one browser action and return a fresh observation. Choose exactly one target: a ref from the latest observation, a unique Playwright selector, or viewport x/y. Use screenshots with coordinates for canvas and other visual controls.', {
+  register('browser_act', 'Perform one browser action and return a fresh observation. Choose exactly one target: a ref from the latest observation, a unique Playwright selector, or viewport x/y. Use screenshots with coordinates for canvas and other visual controls. Mouse actions draw a whale pointer at the click point so the movement is visible in screenshots.', {
     action: { type: 'string', required: true, enum: ['click', 'double_click', 'hover', 'fill', 'type', 'press', 'scroll', 'drag', 'select', 'back', 'forward', 'reload', 'wait'] },
     ref: { type: 'string', description: 'Element reference from the latest observation, e.g. s3e2. Supports frames and open shadow DOM.' },
     selector: { type: 'string', description: 'Unique Playwright locator selector in the main frame; use refs for iframe targets.' },

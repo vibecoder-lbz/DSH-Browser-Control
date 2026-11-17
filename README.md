@@ -40,6 +40,7 @@ DSH Browser Control（包名 `dsh-browser-use`）是一个 **DeepSeek Harness（
 - **接管真实登录态**：复用当前 Chrome / Edge profile 的 Cookie、localStorage 和网站登录，不需要在新浏览器里重新登录或重复过验证码。
 - **原页面零打扰**：在源页面所在窗口以 `active:false` 创建唯一副本，不新开窗口、不移动标签页、不切换活动标签页；副本显示 `【被接管】` 标题、`DSH · 被接管` 标签组和页面角标。
 - **完整的浏览器操作**：DOM 元素引用、Playwright selector、截图、坐标、键盘、滚动、拖拽、下拉框、多标签页、iframe 和开放的 Shadow DOM。
+- **看得见的鼠标动作**：点击、双击、悬停和拖拽会在页面内显示蓝色鲸鱼指针与点击波纹，截图里也能看到操作位置；它只是页面覆盖层，不移动真实系统指针，也不会抢焦点。
 - **为 Agent 设计的观察协议**：每次动作返回新的页面快照；元素引用与真实元素绑定，页面变化后旧引用会报错，避免误点。
 - **结构化编辑，不是盲插文本**：自动识别 Monaco / Ace / CodeMirror / textarea 与 YAML / JSON / properties / XML / SQL / JavaScript，按路径修改并保持缩进、换行、注释和层级；先预览校验，再写入编辑器草稿。
 - **网页终端**：识别使用 xterm.js 的 Web 终端，文字与 Enter 分开发送，读取可访问的 DOM 输出；Canvas / WebGL 场景可回退截图。
@@ -383,6 +384,7 @@ npm run pack:plugin
 | --- | --- |
 | [`src/index.js`](./src/index.js) | DSH 配置、8 个工具注册、图片能力检测、附件与结果渲染 |
 | [`src/browser.js`](./src/browser.js) | 浏览器进程、独立会话、接管会话、动作与资源清理 |
+| [`src/cursor.js`](./src/cursor.js) | 页面内的鲸鱼鼠标指针、点击波纹与拖拽轨迹 |
 | [`src/snapshot.js`](./src/snapshot.js) | 可见元素文本快照、frame / Shadow DOM 识别与引用管理 |
 | [`src/bridge.js`](./src/bridge.js) | 本地 WebSocket 桥、标签页选择、副本创建与全局复用 |
 | [`src/editor.js`](./src/editor.js) | 编辑器识别、文档版本、preview / apply 计划 |
@@ -420,7 +422,7 @@ npm test
 
 DSH Browser Control is a general-purpose browser control plugin for DeepSeek Harness (DSH), paired with a Chrome MV3 extension. It lets AI agents read webpages, compare information across tabs, fill forms, work with business applications, test page interactions, edit supported web code editors, and operate xterm-based terminals through eight browser tools.
 
-Use your existing Chrome / Edge login or launch an isolated browser for a temporary task. When taking over an existing tab, the plugin creates a marked background copy, leaves the source tab untouched, and keeps your current tab in focus. Install the DSH plugin, load `chrome-extension`, and describe your task in natural language. No pairing token, MCP server, or remote debugging port is required.
+Use your existing Chrome / Edge login or launch an isolated browser for a temporary task. When taking over an existing tab, the plugin creates a marked background copy, leaves the source tab untouched, and keeps your current tab in focus. Mouse actions draw a whale pointer and click ripple inside the page, so screenshots show exactly where the agent clicked. Install the DSH plugin, load `chrome-extension`, and describe your task in natural language. No pairing token, MCP server, or remote debugging port is required.
 
 ## License
 

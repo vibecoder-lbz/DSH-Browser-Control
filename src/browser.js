@@ -9,6 +9,7 @@ import { SnapshotStore } from './snapshot.js';
 import { TerminalStore } from './terminal.js';
 import { EditorStore } from './editor.js';
 import { publicUrl } from './url.js';
+import { showPointer } from './cursor.js';
 import { ChromeBridge, publicTab, selectTab } from './bridge.js';
 
 export const DEFAULTS = Object.freeze({
@@ -238,6 +239,44 @@ class BrowserSession {
     }
   }
 
+  async targetPoint(page, target) {
+    try {
+      const box = await target.boundingBox();
+      if (!box || box.width < 1 || box.height < 1) return null;
+      const viewport = page.viewportSize() || this.currentViewport;
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      if (x < 0 || y < 0 || x >= viewport.width || y >= viewport.height) return null;
+      return { x, y };
+    } catch { return null; }
+  }
+
+  async pointer(page, args, target) {
+    const hasRef = typeof args.ref === 'string' && args.ref.trim();
+    const hasSelector = typeof args.selector === 'string' && args.selector.trim();
+    if (['click', 'double_click', 'hover'].includes(args.action)) {
+      const point = target ? await this.targetPoint(page, target) : { x: args.x, y: args.y };
+      return point ? { ...point, action: args.action } : null;
+    }
+    if (args.action === 'drag') {
+      this.coordinates(args.x, args.y, page);
+      this.coordinates(args.toX, args.toY, page);
+      return { x: args.x, y: args.y, toX: args.toX, toY: args.toY, action: 'drag' };
+    }
+    if (['fill', 'type'].includes(args.action) && !target) {
+      return { x: args.x, y: args.y, action: 'click' };
+    }
+    if (args.action === 'press' && !hasRef && !hasSelector && args.x !== undefined && args.y !== undefined) {
+      this.coordinates(args.x, args.y, page);
+      return { x: args.x, y: args.y, action: 'click' };
+    }
+    if (args.action === 'scroll' && args.x !== undefined && args.y !== undefined) {
+      this.coordinates(args.x, args.y, page);
+      return { x: args.x, y: args.y, action: 'hover' };
+    }
+    return null;
+  }
+
   async act(args, signal) {
     const page = await this.activePage();
     const targetRequired = new Set(['click', 'double_click', 'hover', 'fill', 'type', 'select']);
@@ -248,6 +287,8 @@ class BrowserSession {
         await page.evaluate(({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest('.monaco-editor,.ace_editor,.CodeMirror,.cm-editor')), args);
       if (codeEditor) throw new Error('This target is a code editor. Use browser_editor to read the complete document, preview a structural edit and apply it. Hidden textareas and auto-indent can corrupt YAML hierarchy.');
     }
+    const pointer = await this.pointer(page, args, target);
+    if (pointer) await showPointer(page, pointer);
     switch (args.action) {
       case 'click':
       case 'double_click': {

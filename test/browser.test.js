@@ -43,6 +43,7 @@ test('real browser: form, fresh refs, frame/shadow targets, screenshots, tabs an
     observation = await manager.run('form-session', 'act', { action: 'select', ref: refFor(observation, '城市'), value: 'bj' });
     observation = await manager.run('form-session', 'act', { action: 'click', ref: refFor(observation, '提交演示') });
     assert.match(observation.frames[0].text, /已提交：浏览器助手 \/ 北京/);
+    assert.equal(await manager.sessions.get('form-session').session.page.locator('[data-dsh-cursor]').count(), 1);
     observation = await manager.run('form-session', 'act', { action: 'click', ref: refFor(observation, 'Shadow 按钮') });
     assert.ok(observation.elements.some(el => el.name === 'Shadow 已点击'));
     assert.ok(observation.frames.some(frame => frame.url.endsWith('/frame')));
@@ -89,8 +90,18 @@ test('coordinate clicks, keyboard shortcuts, scrolling and concurrent session is
     assert.equal(observation.elements.find(el => el.name === '姓名').value, 'Replaced A');
     const page = manager.sessions.get('a').session.page;
     const canvas = await page.locator('#canvas').boundingBox();
-    await manager.run('a', 'act', { action: 'click', x: canvas.x + 20, y: canvas.y + 20 });
+    const clickX = canvas.x + 20;
+    const clickY = canvas.y + 20;
+    await manager.run('a', 'act', { action: 'click', x: clickX, y: clickY });
     assert.equal(await page.locator('#canvas').getAttribute('data-clicked'), 'true');
+    const pointer = page.locator('[data-dsh-cursor]');
+    assert.equal(await pointer.count(), 1);
+    assert.equal(await pointer.getAttribute('data-cursor-action'), 'click');
+    assert.ok(Math.abs(Number(await pointer.getAttribute('data-cursor-x')) - clickX) <= 1);
+    assert.ok(Math.abs(Number(await pointer.getAttribute('data-cursor-y')) - clickY) <= 1);
+    assert.equal(await pointer.getAttribute('data-cursor-visible'), 'true');
+    await page.waitForTimeout(1800);
+    assert.equal(await pointer.getAttribute('data-cursor-visible'), 'false');
     await assert.rejects(manager.run('a', 'act', { action: 'click', x: -1, y: 0 }), /Coordinates/);
     observation = await manager.run('a', 'act', { action: 'scroll', deltaY: 2200 });
     assert.ok(observation.elements.some(el => el.name === '页面底部按钮'));
