@@ -96,6 +96,7 @@ test('coordinate clicks, keyboard shortcuts, scrolling and concurrent session is
     assert.equal(await page.locator('#canvas').getAttribute('data-clicked'), 'true');
     const pointer = page.locator('[data-dsh-cursor]');
     assert.equal(await pointer.count(), 1);
+    assert.equal(await pointer.getAttribute('data-cursor-icon'), 'mouse');
     assert.equal(await pointer.getAttribute('data-cursor-action'), 'click');
     assert.ok(Math.abs(Number(await pointer.getAttribute('data-cursor-x')) - clickX) <= 1);
     assert.ok(Math.abs(Number(await pointer.getAttribute('data-cursor-y')) - clickY) <= 1);
